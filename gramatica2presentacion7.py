@@ -4,8 +4,6 @@ import time
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
-# --- Definición del Lexer ---
-# Usamos un diccionario para mayor claridad visual
 SIMBOLOS = {
     "T1": r"\buno\b",
     "T2": r"\bdos\b",
@@ -23,7 +21,6 @@ def lexer_proc(cadena):
     """Genera la lista de tokens filtrando espacios."""
     return [(m.lastgroup, m.group()) for m in REGEX_MASTER.finditer(cadena) if m.lastgroup != "SKIP"]
 
-# --- Estructura de Datos del Árbol ---
 class PuntoSintactico:
     def __init__(self, nombre):
         self.label = nombre
@@ -35,7 +32,6 @@ class PuntoSintactico:
         self.branches.append(child_node)
         return child_node
 
-# --- Motor del Analizador (Parser) ---
 class EngineSintactico:
     def __init__(self, stream):
         self.stream = stream
@@ -51,18 +47,15 @@ class EngineSintactico:
             return valor
         return None
 
-    # Regla inicial S
     def rule_S(self, parent):
         node = parent.link(PuntoSintactico("S"))
         save = self.cursor
 
-        # S -> B uno
         if self.rule_B(node):
             if self.match("T1"):
                 node.link(PuntoSintactico("uno"))
                 return True
 
-        # S -> dos C
         self.cursor = save
         node.branches.clear()
         if self.match("T2"):
@@ -70,18 +63,15 @@ class EngineSintactico:
             if self.rule_C(node):
                 return True
 
-        # S -> ε
         self.cursor = save
         node.branches.clear()
         node.link(PuntoSintactico("ε"))
         return True
 
-    # Regla A con múltiples derivaciones
     def rule_A(self, parent):
         node = parent.link(PuntoSintactico("A"))
         save = self.cursor
 
-        # Opción: dos C tres B C A'
         if self.match("T2"):
             node.link(PuntoSintactico("dos"))
             if self.rule_C(node) and self.match("T3"):
@@ -89,7 +79,6 @@ class EngineSintactico:
                 if self.rule_B(node) and self.rule_C(node) and self.rule_Ap(node):
                     return True
 
-        # Opción: uno tres B C A'
         self.cursor = save
         node.branches.clear()
         if self.match("T1"):
@@ -99,7 +88,6 @@ class EngineSintactico:
                 if self.rule_B(node) and self.rule_C(node) and self.rule_Ap(node):
                     return True
 
-        # Opción: tres B C A'
         self.cursor = save
         node.branches.clear()
         if self.match("T3"):
@@ -107,7 +95,6 @@ class EngineSintactico:
             if self.rule_B(node) and self.rule_C(node) and self.rule_Ap(node):
                 return True
 
-        # Opción: cuatro A'
         self.cursor = save
         node.branches.clear()
         if self.match("T4"):
@@ -115,7 +102,6 @@ class EngineSintactico:
             if self.rule_Ap(node):
                 return True
 
-        # Opción: A'
         self.cursor = save
         node.branches.clear()
         if self.rule_Ap(node):
@@ -179,7 +165,6 @@ class EngineSintactico:
         status = self.rule_S(root) and self.get_current()[0] is None
         return status, root
 
-# --- Visualización ---
 def set_layout(node, depth=0, count=[0]):
     if not node.branches:
         node.posX = count[0]
@@ -208,7 +193,6 @@ def paint_tree(node, axis):
 def create_image(root_node, text, is_valid):
     set_layout(root_node, count=[0])
     
-    # Obtener dimensiones
     all_n = []
     def walk(n):
         all_n.append(n)
@@ -237,7 +221,6 @@ def create_image(root_node, text, is_valid):
     plt.savefig(f"tree_{int(time.time())}.png", dpi=100)
     plt.close()
 
-# --- Entrada Principal ---
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Error: Indique el archivo de texto.")
